@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.1/css/bootstrap.min.css"/>
+    <link rel='stylesheet' href='/stylesheets/style.css'/>
+    <title>Halfmoon Move Host</title>
+    <script src="https://static.opentok.com/v2/js/opentok.js"></script>
+</head>
+<body>
+<div class="container-fluid">
+    <div class="alert alert-primary" role="alert">
+        Primary Message Area
+    </div>
+    <div id="videos" class="row">
+        <div id="subscribers" class="col-md-6 col-sm-12">
+            <div class="card" id="subscriber">
+
+            </div>
+        </div>
+        <div class="col-md-6 col-sm-12">
+            <div class="card" id="publisher">
+
+            </div>
+            <div class="card" id="chat">
+                <div id="textchat">
+                    <p id="history"></p>
+                    <form>
+                        <input type="text" placeholder="Input your text here" id="msgTxt"></input>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- OpenTok.js library -->
+<script>
+    function handleError(error) {
+        if (error) {
+            alert(error.message);
+        }
+    }
+
+    // credentials
+    var apiKey = '<%= apiKey %>';
+    var sessionId = '<%= sessionId %>';
+    var token = '<%= token %>';
+    var clientName = '<%= cName %>';
+
+    // connect to session
+    var session = OT.initSession(apiKey, sessionId);
+
+    // create publisher
+    //var publisher = OT.initPublisher();
+    var publisher = OT.initPublisher('publisher', {
+        resolution: '1280x720',
+        insertMode: 'append',
+        width: '100%',
+        height: '100%',
+        caller: 'Tutor',
+        name: 'Tutor',
+    }, handleError);
+
+    session.connect(token, function (error) {
+        // publish publisher
+        if (error) {
+            handleError(error);
+        } else {
+            session.publish(publisher, handleError);
+        }
+    });
+
+    // create subscriber
+    session.on('streamCreated', function (event) {
+        //alert('event.stream.caller' + event.stream.caller);
+        //alert('event.stream.name' + event.stream.name);
+        //alert('event.stream.id' + event.stream.id);
+        var subscribers = session.subscribe(event.stream, 'subscriber', {
+            insertMode: 'before',
+            width: '100%',
+            height: '200',
+            name: event.stream.name,
+            caller: 'Tutor',
+        }, handleError);
+        SpeakerDetection(subscribers, function () {
+            console.log(subscribers.id + 'started talking');
+
+        }, function () {
+            console.log('stopped talking');
+
+        });
+    });
+
+    // Receive a message and append it to the history
+    var msgHistory = document.querySelector('#history');
+    session.on('signal:msg', function signalCallback(event) {
+        var msg = document.createElement('p');
+        msg.textContent = event.data;
+        msg.className = event.from.connectionId === session.connection.connectionId ? 'mine' : 'theirs';
+        msgHistory.appendChild(msg);
+        msg.scrollIntoView();
+    });
+
+    // Text chat
+    var form = document.querySelector('form');
+    var msgTxt = document.querySelector('#msgTxt');
+
+    // Send a signal once the user enters data in the form
+    form.addEventListener('submit', function submit(event) {
+        event.preventDefault();
+
+        session.signal({
+            type: 'msg',
+            data: clientName + ': ' + msgTxt.value
+        }, function signalCallback(error) {
+            if (error) {
+                console.error('Error sending signal:', error.name, error.message);
+            } else {
+                msgTxt.value = '';
+            }
+        });
+    });
+
+    var SpeakerDetection = function (subscriber, startTalking, stopTalking) {
+        var activity = null;
+        subscriber.on('audioLevelUpdated', function (event) {
+            var now = Date.now();
+            if (event.audioLevel > 0.2) {
+                if (!activity) {
+                    activity = {timestamp: now, talking: false};
+                } else if (activity.talking) {
+                    activity.timestamp = now;
+                } else if (now - activity.timestamp > 1000) {
+                    // detected audio activity for more than 1s
+                    // for the first time.
+                    activity.talking = true;
+                    if (typeof (startTalking) === 'function') {
+                        startTalking();
+                    }
+                }
+            } else if (activity && now - activity.timestamp > 3000) {
+                // detected low audio activity for more than 3s
+                if (activity.talking) {
+                    if (typeof (stopTalking) === 'function') {
+                        stopTalking();
+                    }
+                }
+                activity = null;
+            }
+        });
+    };
+
+
+</script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.1/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

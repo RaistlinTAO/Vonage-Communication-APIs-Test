@@ -1,0 +1,33 @@
+body {
+  background-color: #FFFFFF;
+  font: 14px "Lucida Grande", Helvetica, Arial, sans-serif;
+}
+
+a {
+  color: #00B7FF;
+}
+
+#videos {
+  width: 100%;
+  height: 100%;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+#subscribers {
+  height: 100%!important;
+}
+
+#myself {
+  height: 250px!important;
+  width: 100%!important;
+}
+
+#subscriber {
+  width: 100%!important;
+}
+
+#publisher {
+  height: 300px!important;
+  width: 100%!important;
+}
