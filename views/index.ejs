@@ -10,7 +10,7 @@
 <body>
 <div class="container-fluid">
     <div class="alert alert-primary" role="alert">
-        Primary Message Area
+        Global Notification Area
     </div>
     <div id="videos" class="row">
         <div id="subscribers" class="col-md-6 col-sm-12">
@@ -84,7 +84,7 @@
             caller: 'Tutor',
         }, handleError);
         SpeakerDetection(subscribers, function () {
-            console.log(subscribers.id + 'started talking');
+            console.log(subscribers.name + 'started talking');
 
         }, function () {
             console.log('stopped talking');
@@ -109,7 +109,6 @@
     // Send a signal once the user enters data in the form
     form.addEventListener('submit', function submit(event) {
         event.preventDefault();
-
         session.signal({
             type: 'msg',
             data: clientName + ': ' + msgTxt.value

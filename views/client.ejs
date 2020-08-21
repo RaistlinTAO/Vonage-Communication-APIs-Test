@@ -10,7 +10,7 @@
 <body>
 <div class="container-fluid">
     <div class="alert alert-primary" role="alert">
-        Primary Message Area
+        Global Notification Area
     </div>
     <div id="videos" class="row">
         <div id="subscribers" class="col-md-4 col-sm-12">
@@ -75,20 +75,28 @@
         //alert('event.stream.caller' + event.stream.caller);
         //alert('event.stream.name' + event.stream.name);
         //alert('event.stream.id' + event.stream.id);
+        var subscribers;
         if (event.stream.name === 'Tutor') {
-            session.subscribe(event.stream, 'publisher', {
+            subscribers = session.subscribe(event.stream, 'publisher', {
                 //insertMode: 'append',
                 width: '100%',
                 height: '100%'
             }, handleError);
         } else {
-            session.subscribe(event.stream, 'subscriber', {
+            subscribers = session.subscribe(event.stream, 'subscriber', {
                 insertMode: 'before',
                 width: '100%',
                 height: '200',
-                type: 'bestFit'
+                //type: 'bestFit'
             }, handleError);
         }
+        SpeakerDetection(subscribers, function () {
+            console.log(subscribers.name + 'started talking');
+
+        }, function () {
+            console.log('stopped talking');
+
+        });
     });
 
     // Receive a message and append it to the history
@@ -120,6 +128,35 @@
             }
         });
     });
+
+    var SpeakerDetection = function (subscriber, startTalking, stopTalking) {
+        var activity = null;
+        subscriber.on('audioLevelUpdated', function (event) {
+            var now = Date.now();
+            if (event.audioLevel > 0.2) {
+                if (!activity) {
+                    activity = {timestamp: now, talking: false};
+                } else if (activity.talking) {
+                    activity.timestamp = now;
+                } else if (now - activity.timestamp > 1000) {
+                    // detected audio activity for more than 1s
+                    // for the first time.
+                    activity.talking = true;
+                    if (typeof (startTalking) === 'function') {
+                        startTalking();
+                    }
+                }
+            } else if (activity && now - activity.timestamp > 3000) {
+                // detected low audio activity for more than 3s
+                if (activity.talking) {
+                    if (typeof (stopTalking) === 'function') {
+                        stopTalking();
+                    }
+                }
+                activity = null;
+            }
+        });
+    };
 
 </script>
 </body>
