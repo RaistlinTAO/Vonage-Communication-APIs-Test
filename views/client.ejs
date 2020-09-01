@@ -10,12 +10,18 @@
 <body>
 <div class="container-fluid">
     <div class="alert alert-primary" role="alert">
-        Global Notification Area
+        Global Notification Area <br><span class="" id="clientCount"></span>
     </div>
     <div id="videos" class="row">
         <div id="subscribers" class="col-md-4 col-sm-12">
             <div class="card" id="myself">
 
+            </div>
+            <div class="btn-group" role="group" aria-label="Basic example">
+                <button type="button" onclick="disableAudio()" class="btn btn-secondary">Mute Self</button>
+                <button type="button" onclick="disableVideo()" class="btn btn-secondary">Disable Video</button>
+                <button type="button" onclick="enableAudio()" class="btn btn-secondary">UnMute Self</button>
+                <button type="button" onclick="enableVideo()" class="btn btn-secondary">enable Video</button>
             </div>
             <div class="card" id="subscriber">
 
@@ -39,6 +45,8 @@
 <!-- OpenTok.js library -->
 <script src="https://static.opentok.com/v2/js/opentok.js"></script>
 <script>
+    let clientCount = 1;
+
     function handleError(error) {
         if (error) {
             alert(error.message);
@@ -76,6 +84,8 @@
         //alert('event.stream.name' + event.stream.name);
         //alert('event.stream.id' + event.stream.id);
         var subscribers;
+        clientCount++;
+        document.getElementById("clientCount").innerHTML = 'Online Count: ' + clientCount.toString();
         if (event.stream.name === 'Tutor') {
             subscribers = session.subscribe(event.stream, 'publisher', {
                 //insertMode: 'append',
@@ -95,7 +105,6 @@
 
         }, function () {
             console.log('stopped talking');
-
         });
     });
 
@@ -157,6 +166,22 @@
             }
         });
     };
+
+    function disableVideo() {
+        publisher.publishVideo(false);
+    }
+
+    function enableVideo() {
+        publisher.publishVideo(true);
+    }
+
+    function disableAudio() {
+        publisher.publishAudio(false);
+    }
+
+    function enableAudio() {
+        publisher.publishAudio(true);
+    }
 
 </script>
 </body>
